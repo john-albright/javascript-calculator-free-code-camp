@@ -17,14 +17,17 @@ The calculator uses formula/expression logic to calculate strings with arithmeti
 |    nine  |   9   | adds 9 to the display |
 |    zero  |   0   | adds 0 to the display |
 |  decimal |   .   | adds . to the display |
-|  delete  |   Delete, ArrowLeft   | deletes the last element from the display |
+|  delete  |   Backspace, ArrowLeft   | deletes the last element from the display |
 |   clear  |   c   | resets the display to show zero |
 |  answer  |   a   | adds the last calculated value to the display |
-|   add    |   +   | adds an addition sign to the display |
-| subtract |   -   | adds a negative sign to the display |
-| multiply |   *   | adds a multiplication sign to the display |
-|  divide  |   /   | adds a division sign to the display |
-|  equals  |   Enter, =   | processes the arithmetic expression in the display and stores the result in ANS |
+|   add    |   +   | adds + to the display |
+| subtract |   -   | adds − to the display |
+| multiply |   *   | adds × to the display |
+|  divide  |   /   | adds ÷ to the display |
+| exponent | ^ | adds ˆ to the display |
+| front-parenthesis | ( | adds ( to the display |
+| back-parenthesis | ) | adds ) to the display |
+|  equals  |   Enter, =   | processes the arithmetic expression in the display and stores the result in ANS 
 
 The calculate() function relies on a class function by the same name of an abstract syntax tree data structure. This tree relies on a node class that has been slightly altered to have either a poperty of either operator or value (i.e. operand, number). The node class is built to make sure that a node has one or the other but not both. 
 

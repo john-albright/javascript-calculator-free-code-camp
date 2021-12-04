@@ -1,17 +1,81 @@
-// Data structures to be used for calculations with formula logic
+// Data structures to be used for calculations done via formula logic
 
 // Node data structure for operators and operands
-function Node(start, left = null, right = null) {
-    if (typeof start === "number") {
-        this.value = start;
-        this.operation = null;
-    } else {
-        this.value = null;
-        this.operation = start; 
+class Node {
+    constructor(start, left = null, right = null) {
+        if (typeof start === "number") {
+            this.value = start;
+            this.operation = null;
+        } else {
+            this.value = null;
+            this.operation = start; 
+        }
+        this.left = left;
+        this.right = right;
     }
-    this.left = left;
-    this.right = right;
 };
+
+// Stack data structure
+class Stack {
+    constructor(startingVals = []) {
+        this.elements = [...startingVals];
+    }
+
+    peek() {
+        return this.isEmpty() ? null : this.elements[this.length() - 1];
+    }
+
+    length() {
+        return this.elements.length;
+    }
+
+    isEmpty() {
+        return this.elements.length === 0;
+    }
+
+    pop() {
+        return this.isEmpty() ? null : this.elements.pop();
+    }
+
+    push(element) {
+        this.elements.push(element);
+    }
+
+    print() {
+        console.log(this.elements);
+    }
+
+    toArray() {
+        return this.elements;
+    }
+}
+
+// Queue data structure
+class Queue {
+    constructor(startingVals = []) {
+        this.elements = [...startingVals];
+    }
+
+    dequeue() {
+        return this.isEmpty() ? null : this.elements.shift();
+    }
+
+    enqueue(element) {
+        this.elements.push(element);
+    }
+
+    length() {
+        return this.elements.length;
+    }
+
+    isEmpty() {
+        return this.elements.length === 0;
+    }
+
+    toArray() {
+        return this.elements;
+    }
+}
 
 // Abstract syntax tree for strings of arithmetic
 class AbstractSyntaxTree {
@@ -29,55 +93,48 @@ class AbstractSyntaxTree {
     // example: [ 8.8, "−", 5.5, "×", 9, "÷", 50, "+", 3 ]
     build(elements) {
 
-        var leftElem, rightElem, operator;
-        var lastOperatorMD = false;
-        var reducedArray1 = [];
+        var reducedForExponents = processForOperation("ˆ", elements);
+        //console.log(reducedForExponents);
 
-        // Iterate through the elements and create leaves for multiplication and division
-        for (let i = 1; i < elements.length; i += 2) {
-            //console.log(elements[i]);
-            if (elements[i].match(/[+÷×−]/)) {
-                if (elements[i] == "×" || elements[i] == "÷") {
-                    leftElem = typeof reducedArray1[reducedArray1.length - 1] !== "object" ? new Node(elements[i - 1]) : reducedArray1.pop();
-                    rightElem = new Node(elements[i + 1]);
-                    operator = new Node(elements[i], leftElem, rightElem);
-                    reducedArray1.push(operator);
-                    lastOperatorMD = true; 
+        var reducedForMultDiv = processForOperation("×÷", reducedForExponents);
+        //console.log(reducedForMultDiv);
+
+        var reducedForAddSub = processForOperation("+−", reducedForMultDiv);
+        //console.log(reducedForAddSub);
+
+        this.root = reducedForAddSub[0];
+
+        // Helper function for each round of operation processing
+        function processForOperation(operation, array) {
+            var leftElem, rightElem, operator;
+            var stack = new Stack();
+            var queue = new Queue(array);
+            const regex = new RegExp("[" + operation + "]");
+            //console.log(regex);
+            var dequeuedElem, nextDequeuedElem;
+
+            while (!queue.isEmpty()) {
+                //console.log(array[i].toString());
+                dequeuedElem = queue.dequeue();
+                //console.log(dequeuedElem);
+                if (dequeuedElem.toString().match(regex)) {
+                    //console.log("empty?", !stack.isEmpty());
+                    //console.log("peek:", stack.peek());
+                    //console.log("check type:", typeof stack.peek());
+                    leftElem = (!stack.isEmpty() && typeof stack.peek() !== "object") ? new Node(stack.pop()) : stack.pop();
+                    nextDequeuedElem = queue.dequeue();
+                    rightElem = typeof nextDequeuedElem !== "object" ? new Node(nextDequeuedElem) : nextDequeuedElem;
+                    operator = new Node(dequeuedElem, leftElem, rightElem);
+                    stack.push(operator);
+                    //stack.print();
+                    //console.log(operator);
                 } else {
-                    //console.log(lastOperatorMD);
-                    if (!lastOperatorMD) reducedArray1 = reducedArray1.concat(elements.slice(i - 1, i + 1));
-                    else reducedArray1.push(elements[i]);
-
-                    if (i === elements.length - 2) reducedArray1.push(elements[i + 1]);
-
-                    lastOperatorMD = false; 
+                    stack.push(dequeuedElem);
                 }
             }
+
+            return stack.toArray();
         }
-
-        //console.log(reducedArray1);
-        
-        // Initialize variable to store the last node created in iterations of the loop below
-        var lastNode = null;
-
-        // Iterate throuh the elements and create leaves for addition and subtraction
-        for (let i = 0; i < reducedArray1.length; i++) {
-            //console.log(reducedArray1[i]);
-            if (typeof reducedArray1[i] !== "object" && (reducedArray1[i] === "+" || reducedArray1[i] === "−")) {
-                //leftElem = typeof reducedArray1[i - 1] === "number" ? new Node(reducedArray1[i - 1]) : lastNode ? lastNode : reducedArray1[i - 1];
-                leftElem = lastNode ? lastNode : typeof reducedArray1[i - 1] === "number" ? new Node(reducedArray1[i - 1]) : reducedArray1[i - 1];
-                rightElem = typeof reducedArray1[i + 1] === "number" ? new Node(reducedArray1[i + 1]) : reducedArray1[i + 1];
-                lastNode = new Node(reducedArray1[i], leftElem, rightElem);
-                //console.log("left:", leftElem);
-                //console.log("right:", rightElem);
-                //console.log("sum:", lastNode);
-                //console.log("last node:", lastNode);
-            }        
-        }
-
-        if (lastNode) this.root = lastNode;
-        else this.root = reducedArray1[0];
-        console.log(this.root);
     }
 
     // This method evaluates the result of the arithmetic operations stored 
@@ -88,7 +145,7 @@ class AbstractSyntaxTree {
             return 0;
         }
 
-        if (node.value) {
+        if (node.value !== null) {
             return node.value;
         }
 
@@ -101,6 +158,8 @@ class AbstractSyntaxTree {
                 return this.calculate(node.left) * this.calculate(node.right);
             case "\u00f7": // ÷
                 return this.calculate(node.left) / this.calculate(node.right);
+            case "\u02C6": // ˆ
+                return this.calculate(node.left) ** this.calculate(node.right);
         }
     }
 }
@@ -108,14 +167,22 @@ class AbstractSyntaxTree {
 // Event listener assignments of the HTML document
 document.addEventListener("DOMContentLoaded", function() {
 
+    // Add classes to div groups for styles (to be toggled)
+    var topPad = document.querySelectorAll("#clear, #delete, #front-parenthesis, #back-parenthesis, #answer");
+    topPad.forEach(x => x.classList.add("inactive-top"));
+    var rightPad = document.querySelectorAll(".operator, #exponent, #equals");
+    rightPad.forEach(x => x.classList.add("inactive-right"));
+    var mainPad = document.querySelectorAll(".number, #decimal");
+    mainPad.forEach(x => x.classList.add("inactive-main"));
+
     var lastVal; // to keep track a previously calculated value
     
     const operatorsToChooseFrom = "+÷×−"; // the subtraction symbol used in the calculator is slightly longer than -
     const fourOperatorsRegex = /[+÷×−]/;
 
     // Define regex expressions for parsing complex strings 
-    const numberRegex = /(((?<=\D)−)?|(^[−]))[.]?\d+[.]?\d*/g;
-    const operatorRegex = /[+÷×](?=[−]?\d?[.]?\d+)|[−](?=[−][.]?\d)|(?<=\d)[−](?=[.]?\d)/g;
+    const numberRegex = /(((?<=\D)−)?|(^[−-]))[.]?\d+[.]?\d*/g;
+    const operatorRegex = /[+÷×ˆ](?=[−]?\d?[.]?\d+)|[−](?=[−][.]?\d)|(?<=\d)[−](?=[.]?\d)/g;
     const numAndOpRegex = /((((?<=\D)−)?|(^[−]))[.]?\d+[.]?\d*)|([+÷×](?=[−]?\d?[.]?\d+)|[−](?=[−]\d)|(?<=\d)[−](?=[.]?\d))/g;
 
     // Get DOM elements to be modified
@@ -127,71 +194,101 @@ document.addEventListener("DOMContentLoaded", function() {
     var equalsDiv = document.getElementById("equals");
     var decimalDiv = document.getElementById("decimal");
     var answerDiv = document.getElementById("answer");
+    var exponentDiv = document.getElementById("exponent");
+    var parenthesisFrontDiv = document.getElementById("front-parenthesis");
+    var parenthesisBackDiv = document.getElementById("back-parenthesis");
+    var parenthesesDivs = [parenthesisFrontDiv, parenthesisBackDiv];
 
     // Add keydown events to document
     document.addEventListener('keydown', (e) => {
         //console.log(e);
-        if (e.key.match(/\d/)) enterNumber(e);
+        if (e.key.match(/\d/)) addNumber(e);
         else if (e.key.match(/[*+/-]/)) addOperator(e);
         else if (e.key == "=" || e.key == "Enter") calculate(); 
-        else if (e.key == ".") enterDecimal();
-        else if (e.key == "ArrowLeft" || e.key == "Delete") deleteLast();
+        else if (e.key == ".") addDecimal();
+        else if (e.key == "ArrowLeft" || e.key == "Backspace") deleteLast();
         else if (e.key == "c") clearAll();
         else if (e.key == "a") showLastAnswer();
+        else if (e.key == "^") addExponent();
+        else if (e.key == "(" || e.key == ")") addParenthesis(e);
     });
 
     /*============================
        --- Add event listeners to divs with the class "number."
        --- Don't allow the user to add 0's before a number.
     ==============================*/
-    numberDivs.forEach(x => x.addEventListener("click", enterNumber));
+    numberDivs.forEach(x => x.addEventListener("click", addNumber));
 
-    function enterNumber(e) {
+    function addNumber(e) {
+
+        // Apply styles 
+        const divNames = ['zero', 'one', 'two', 'three', 'four', 'five',
+                          'six', 'seven', 'eight', 'nine']
+
+        var divToStyle = e.type === "click" ? this : document.getElementById(divNames[parseInt(e.key)]);
+
+        divActiveStyles(divToStyle, "active-main", "inactive-main");
+
+        // Guard statements
+        var numbers = display.innerHTML.split(fourOperatorsRegex);
+        const displayLastParsed = numbers[numbers.length - 1];
+        const displayLast = display.innerHTML[display.innerHTML.length - 1];
+        //console.log(numbers, displayLast, displayLastParsed);
+
+        if (display.innerHTML !== "0" && displayLastParsed == 0 && !displayLastParsed.match(/[.]/g) && !displayLast.match(fourOperatorsRegex)) return;
+
+        // Determine value to add
         var valueToAdd = e.type === "keydown" ? e.key : this.innerHTML;
         //console.log(valueToAdd);
 
-        //var parsedText = display.innerHTML.match(numAndOpRegex);
-        //console.log(parsedText);
-        const displayLen = display.innerHTML.length;
-        //console.log(lastVal);
 
-        if (display.innerHTML == lastVal) display.innerHTML = valueToAdd;
-        else if (display.innerHTML[displayLen - 1] == 0) display.innerHTML = display.innerHTML.slice(0, displayLen - 1) + valueToAdd;
+        if (display.innerHTML == lastVal && valueToAdd == lastVal) display.innerHTML = valueToAdd;
+        else if (display.innerHTML === "0") display.innerHTML = valueToAdd;
+        //else if (display.innerHTML[displayLen - 1] == 0) display.innerHTML = display.innerHTML.slice(0, displayLen - 1) + valueToAdd;
         else display.innerHTML += valueToAdd;
+
     }
 
     /*============================
        --- Add event listeners to the div with the id "decimal"
        --- Don't add a decimal if the last number has a decimal in it already. 
     ==============================*/
-    decimalDiv.addEventListener("click", enterDecimal);
+    decimalDiv.addEventListener("click", addDecimal);
 
-    function enterDecimal() {        
+    function addDecimal() {    
+        // Apply styles
+        divActiveStyles(decimalDiv, "active-main", "inactive-main");
+        
+        // Guard statements
         var numbers = display.innerHTML.split(fourOperatorsRegex);
         const displayLast = numbers[numbers.length - 1];
         const decimalMatch = displayLast.match(/[.]/g);
-
         //console.log(numbers, displayLast);
         //console.log("decimal match:", decimalMatch)
 
         if (decimalMatch) return;
 
-        display.innerHTML += ".";
+        // Add the decimal point if passes tests
+        display.innerHTML += "."; // change display text
     }
     
     /*============================
-       --- Add event listeners to divs with ids "clear," "delete," and "answer."
-       --- The default display value is 0.
+       --- Add event listeners to divs with ids "clear," "delete," "answer," and "parenthesis."
+       --- The default "empty" display value is 0.
     ==============================*/
     clearDiv.addEventListener("click", clearAll);
     
     function clearAll() {
-        display.innerHTML = 0;
+        divActiveStyles(clearDiv, "active-top", "inactive-top"); // apply styles
+
+        display.innerHTML = 0; // change display text
     }
 
     deleteDiv.addEventListener("click", deleteLast);
     
     function deleteLast() {
+        divActiveStyles(deleteDiv, "active-top", "inactive-top"); // apply styles
+
         const displayLen = display.innerHTML.length;
         if (displayLen > 1) display.innerHTML = display.innerHTML.slice(0, displayLen - 1)
         else display.innerHTML = 0; 
@@ -200,10 +297,39 @@ document.addEventListener("DOMContentLoaded", function() {
     answerDiv.addEventListener("click", showLastAnswer);
 
     function showLastAnswer() {
+        divActiveStyles(answerDiv, "active-top", "inactive-top"); // apply styles
+        
         if (lastVal) {
             if (display.innerHTML == 0) display.innerHTML = lastVal; 
             else display.innerHTML += lastVal;
         }
+    }
+
+    parenthesesDivs.forEach(x => x.addEventListener("click", addParenthesis));
+
+    function addParenthesis(e) {
+        // Apply styles
+        var divToStyle = e.type === "click" ? this : e.key === "(" ? parenthesisFrontDiv : parenthesisBackDiv;
+        divActiveStyles(divToStyle, "active-top", "inactive-top");
+        
+        // Guard statements
+        var numbers = display.innerHTML.split(fourOperatorsRegex);
+        const displayLastParsed = numbers[numbers.length - 1];
+        const displayLast = display.innerHTML[display.innerHTML.length - 1];
+        console.log(numbers, displayLast);
+        
+        if (!displayLast.match(fourOperatorsRegex) && displayLastParsed == 0 && numbers.length != 1) return;
+
+        // Determine how to add the parenthesis
+        var valueToAdd; 
+        if (this.id === "front-parenthesis" || e.key === "(") valueToAdd = "(";
+        else if (this.id === "back-parenthesis" || e.key === ")") valueToAdd = ")";
+        else valueToAdd = "";
+
+        // Add the parenthesis 
+        if (display.innerHTML == 0) display.innerHTML = valueToAdd;
+        else display.innerHTML += valueToAdd;
+
     }
 
     /*============================
@@ -214,26 +340,56 @@ document.addEventListener("DOMContentLoaded", function() {
     operationDivs.forEach(x => x.addEventListener("click", addOperator));
 
     function addOperator(e) {
-        
+        // Declare variables
         const displayLen = display.innerHTML.length;
         const displayLast = display.innerHTML[displayLen - 1]; 
         const displaySecondToLast = display.innerHTML[displayLen - 2];
         var valueToAdd;
 
-        if (this.id === "add" || e.key === "+") valueToAdd = "+";
-        else if (this.id === "subtract" || e.key === "-") valueToAdd = "−";
-        else if (this.id === "multiply" || e.key === "*") valueToAdd = "×";
-        else if (this.id === "divide" || e.key === "/") valueToAdd = "÷";
+        // Apply styles 
+        const divNames = { '/':'divide', '*':'multiply', '-':'subtract', '+':'add' };
+        var divToStyle = e.type === "click" ? this : document.getElementById(divNames[e.key]);
+        divActiveStyles(divToStyle, "active-right", "inactive-right"); // apply styles
 
         // Guard statements
         if (displayLast === "." && displaySecondToLast.match(fourOperatorsRegex)) return;
         if (display.innerHTML == 0 && valueToAdd !== "−") return;
         if (display.innerHTML == "−") return;
+        
+        // Determine value to add 
+        if (this.id === "add" || e.key === "+") valueToAdd = "+";
+        else if (this.id === "subtract" || e.key === "-") valueToAdd = "−";
+        else if (this.id === "multiply" || e.key === "*") valueToAdd = "×";
+        else if (this.id === "divide" || e.key === "/") valueToAdd = "÷";
 
         //if (lastVal) display.innerHTML = lastVal;
 
         if (display.innerHTML == 0) display.innerHTML = valueToAdd;
         else display.innerHTML += valueToAdd; 
+    }
+
+    /*============================
+       --- Add event listeners to the div with the id "exponent."
+       --- Don't allow the user to add an exponent at the beginning,
+           after an operator, or after a decimal point preceded only 
+           by zero. 
+    ==============================*/
+    exponentDiv.addEventListener("click", addExponent);
+
+    function addExponent() {
+        // Apply styles
+        divActiveStyles(exponentDiv, "active-right", "inactive-right");
+        
+        // Guard statements
+        var numbers = display.innerHTML.split(fourOperatorsRegex);
+        const displayLastParsed = numbers[numbers.length - 1];
+        const displayLast = display.innerHTML[display.innerHTML.length - 1];
+        console.log(numbers, displayLast);
+
+        if (displayLast.match(fourOperatorsRegex)) return;
+        if (displayLastParsed == 0 && displayLastParsed.match(/./g)) return;
+        
+        display.innerHTML += "ˆ";
     }
 
     /*============================
@@ -244,9 +400,11 @@ document.addEventListener("DOMContentLoaded", function() {
     equalsDiv.addEventListener("click", calculate);
 
     function calculate() {
-        if (operatorsToChooseFrom.includes(display.innerHTML[display.innerHTML.length - 1])) {
-            return;
-        }
+        divActiveStyles(equalsDiv, "active-right", "inactive-right"); // apply styles
+
+        if (display.innerHTML == 0) return;
+        if (!display.innerHTML.match(/[+÷×−ˆ]/g)) return;
+        if (operatorsToChooseFrom.includes(display.innerHTML[display.innerHTML.length - 1])) return;
 
         var numbers = display.innerHTML.match(numberRegex).map((x) => {
             if (x[0] === "\u2212") return parseFloat(`-${x.slice(1)}`);
@@ -271,22 +429,39 @@ document.addEventListener("DOMContentLoaded", function() {
         // Transfer parsedText to an abstract syntax trees and call class methods 
         var tree = new AbstractSyntaxTree();
         tree.build(parsedText);
+
         var calculation = tree.calculate();
 
-        console.log(calculation);
+        console.log("final calculation:", calculation);
 
         // Make sure rounding errors are eliminated
         calculation = Math.round(calculation * 1000000000000) / 1000000000000; 
         
         // Check if the calculated number is negative and adjust the format if so
-        if (calculation < 0) calculation = "−" + Math.abs(calculation);
-        else calculation = calculation.toString();
+        /*if (calculation < 0) calculation = "−" + Math.abs(calculation);
+        else calculation = calculation.toString();*/
 
         // Store the answer in the global variable lastVal
         lastVal = calculation; 
 
         // Show the result of the calculation in the display
         display.innerHTML = calculation;
+    }
+
+    /*============================
+       --- Add a style toggle functions, 
+           which is called above in several functions.
+    ==============================*/
+
+    function divActiveStyles(div, activeStyle, inactiveStyle) {
+
+        div.classList.remove(inactiveStyle);
+        div.classList.add(activeStyle);
+
+        setTimeout(() => {
+            div.classList.remove(activeStyle);
+            div.classList.add(inactiveStyle);
+        }, 500);
     }
 
 });
