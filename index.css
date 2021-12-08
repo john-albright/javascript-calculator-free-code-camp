@@ -6,7 +6,9 @@ body {
 }
 
 #calculator {
-    background-color: rgb(33, 22, 85);
+    background-color: rgb(22, 13, 65);
+    border: inset 3px lightblue;
+    border-radius: 2px;
     width: 350px; 
     padding: 10px;
     margin: auto;
@@ -27,7 +29,7 @@ body {
 }
 
 #display {
-    background-color: rgb(37, 46, 56);
+    background-color: rgb(12, 15, 22);
     border: 1px solid lightgray;
     grid-column: 1/5;
     overflow: auto;
@@ -48,11 +50,12 @@ body {
     grid-column: 1/3; 
 }
 
-/* 
+/****
 =============
 Classes to be applied with JavaScript in a toggle-like fashion.
 =============
-*/
+****/
+
 .active-top {
     background-color: rgb(98, 100, 209);
     border: 1.5px solid rgb(22, 24, 138);
@@ -65,13 +68,13 @@ Classes to be applied with JavaScript in a toggle-like fashion.
 }
 
 .active-right {
-    background-color: rgb(212, 131, 117);
+    background-color: rgb(207, 147, 137);
     border: 1.5px solid rgb(218, 33, 33);
     transition: all 0.5s ease-in;
 }
 
 .inactive-right {
-    background-color: rgb(196, 75, 54);
+    background-color: rgb(204, 59, 33);
     border: 1px solid lightgray;
 }
 
