@@ -241,7 +241,8 @@ class AbstractSyntaxTree {
             currentRow += 2 ** (currentHeight - 1);
             while (index < currentRow) {
                 elementToProcess = listToPrint[index];
-                if (elementToProcess && typeof elementToProcess != "number") listToPrint[index] = elementToProcess.value || elementToProcess.operation;
+                //console.log(elementToProcess);
+                if (elementToProcess != null) listToPrint[index] = elementToProcess.value || elementToProcess.operation || 0;
                 if (currentHeight < totalHeight) {
                     firstToAdd = elementToProcess ? elementToProcess.left : null;
                     secondToAdd = elementToProcess ? elementToProcess.right : null;
@@ -324,7 +325,7 @@ class AbstractSyntaxTree {
 
                 // Determine if the space on the tree is empty or full 
                 // An empty space is denoted by a null value in the array returned from toPrintArray()
-                operandOrOperation = array[index] ? array[index].toString() : " ";
+                operandOrOperation = array[index] !== null ? array[index].toString() : " ";
                 //console.log(whiteSpaceCount, operandOrOperation.length);
 
                 // Update white space taking into account the length of the value to be added
@@ -378,7 +379,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const parenthesesRegex = /[()]/g;
     const completeRegex = new RegExp(numberRegex.source + "|" + operatorRegex.source + "|" + parenthesesRegex.source, "g");
 
-    //var calculateDone = false; 
+    // Global variable that is set to true after a successful completion of the calculate() function
+    // The variable is set to false when any other key is entered after the equal sign. 
+    var calculateDone = false; 
 
     // Get DOM elements to be modified
     var numberDivs = document.querySelectorAll(".number");
@@ -395,14 +398,20 @@ document.addEventListener("DOMContentLoaded", function() {
     var parenthesesDivs = [parenthesisFrontDiv, parenthesisBackDiv];
 
     // Show all clicked divs - serves as a type of middleware for debugging
-    /*var allDivs = document.querySelectorAll(".number, .operator, #clear, #equals, #decimal");
-    allDivs.forEach(x => x.addEventListener('click', printDivID));
-    function printDivID() {
+    var allDivs = document.querySelectorAll(".number, .operator, #clear, #equals, #decimal");
+    
+    // To see the names of all divs activated, uncomment the following line 
+    // allDivs.forEach(x => x.addEventListener('click', printDivID));
+    
+    // Function for debugging by 
+    function printDivID(e) {
         //console.log("lastVal:", lastVal);
+        console.log("calculate done?", calculateDone);
         console.log("display:", display.innerHTML);
         console.log("");
-        console.log("clicked on", this.innerHTML);
-    }*/
+        if (this.innerHTML) console.log("clicked on", this.innerHTML);
+        if (e.type === "keydown") console.log("pressed key", e.key); 
+    }
 
     // Add keydown events to document
     document.addEventListener('keydown', (e) => {
@@ -416,6 +425,9 @@ document.addEventListener("DOMContentLoaded", function() {
         else if (e.key == "ArrowLeft" || e.key == "Backspace") deleteLast();
         else if (e.shiftKey && e.code === "KeyC") clearAll();
         else if (e.key == "=" || e.key == "Enter") calculate();
+        
+        // To see the names of all divs activated, uncomment the following line 
+        // if (e.key.match(/[0-9*+/a()^-]/) || (e.shiftKey && e.code === "KeyC")) printDivID(e);
     });
 
     /*============================
@@ -434,7 +446,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         divActiveStyles(divToStyle, "active-main", "inactive-main");
 
-        // Guard statements
+        // Parse display text
         var numbers = display.innerHTML.split(/[()ˆ+÷×−]/g);
         const displayLastParsed = numbers[numbers.length - 1];
         const displayLast = display.innerHTML[display.innerHTML.length - 1];
@@ -442,15 +454,30 @@ document.addEventListener("DOMContentLoaded", function() {
         //console.log("display last:", displayLast);
         //console.log("display last parsed:", displayLastParsed);
 
-        if (display.innerHTML !== "0" && displayLastParsed == 0 && !displayLastParsed.match(/[.]/g) && !displayLast.match(/[()ˆ+÷×−]/g)) return;
-
         // Determine value to add
         var valueToAdd = e.type === "keydown" ? e.key : this.innerHTML;
         //console.log("value to add:", valueToAdd);
 
-        if (display.innerHTML == valueToAdd) {
+        // Limit the user from inserting a 0 if 
+        // (1) the display has a 0 in it
+        // (2) the last parsed value (no operators) is equivalent to 0: "0" or "0."
+        // (3) the last parsed value (no operators) is a lone decimal "."
+        // (4) the last value of the display is not an operator
+        if (valueToAdd == 0 && display.innerHTML != 0 && displayLastParsed == 0 && !displayLastParsed.match(/[.]/g) && !displayLast.match(/[()ˆ+÷×−]/g)) return;
+
+
+        /*if (calculateDone) {
+            display.innerHTML = "0";
+            calculateDone = false; 
+        }*/
+
+        /* if (display.innerHTML == lastVal) { // display.innerHTML === valueToAdd
+            display.innerHTML = valueToAdd;   
+        } */
+        
+        if (calculateDone) {
             display.innerHTML = valueToAdd;
-            //calculateDone = false; 
+            calculateDone = false;
         } else if (display.innerHTML === "0") {
             display.innerHTML = valueToAdd;
         } else {
@@ -468,20 +495,25 @@ document.addEventListener("DOMContentLoaded", function() {
     function addDecimal() {    
         // Apply styles
         divActiveStyles(decimalDiv, "active-main", "inactive-main");
-        
-        // Guard statements
+
+        // Guard statement
         var numbers = display.innerHTML.split(/[()ˆ+÷×−]/g);
         const displayLast = numbers[numbers.length - 1];
         const decimalMatch = displayLast.match(/[.]/g);
         //console.log("numbers:", numbers);
         //console.log("display last:", displayLast);
         //console.log("decimal match:", decimalMatch);
-
         if (display.innerHTML != lastVal && decimalMatch) return;
 
-        // Add the decimal point if passes tests
-        if (display.innerHTML == lastVal) display.innerHTML = "0."
-        else display.innerHTML += ".";
+        // Add the decimal point or a 0 and a decimal point
+        // Change flag if its the first value input after pressing enter
+        if (calculateDone) { // display.innerHTML == lastVal
+            display.innerHTML = "0."
+            calculateDone = false;
+        }
+        else {
+            display.innerHTML += ".";
+        }
     }
     
     /*============================
@@ -491,30 +523,46 @@ document.addEventListener("DOMContentLoaded", function() {
     clearDiv.addEventListener("click", clearAll);
     
     function clearAll() {
-        divActiveStyles(clearDiv, "active-top", "inactive-top"); // apply styles
+        // Apply styles
+        divActiveStyles(clearDiv, "active-top", "inactive-top");
 
-        display.innerHTML = 0; // change display text
+        // Exit if the display is the string "0"
+        if (display.innerHTML === "0") return;
+        
+        // Change the display to 0 if this statement is reached
+        display.innerHTML = 0;
     }
 
     deleteDiv.addEventListener("click", deleteLast);
     
     function deleteLast() {
-        divActiveStyles(deleteDiv, "active-top", "inactive-top"); // apply styles
+        // Apply Styles
+        divActiveStyles(deleteDiv, "active-top", "inactive-top");
 
-        const displayLen = display.innerHTML.length;
-        if (displayLen > 1) display.innerHTML = display.innerHTML.slice(0, displayLen - 1)
-        else display.innerHTML = 0; 
+        // Exit if the display is the string 0
+        if (display.innerHTML === "0") return;
+
+        // Change the text if the display is not the string "0"
+        display.innerHTML = display.innerHTML.slice(0, display.innerHTML.length - 1)
     }
 
     answerDiv.addEventListener("click", showLastAnswer);
 
     function showLastAnswer() {
-        divActiveStyles(answerDiv, "active-top", "inactive-top"); // apply styles
+        // Apply styles
+        divActiveStyles(answerDiv, "active-top", "inactive-top");
         
-        if (lastVal) {
-            if (display.innerHTML == 0 || display.innerHTML == lastVal) display.innerHTML = lastVal; 
-            else display.innerHTML += lastVal;
-        }
+        // Exit if there's not lastVal or the lastVal is in the display
+        if (!lastVal) return;
+        
+        // Set the calculateDone flag
+        if (calculateDone) {
+            calculateDone = false;
+        } 
+
+        // Change the display text if reached
+        if (display.innerHTML == 0 || display.innerHTML === lastVal.toString()) display.innerHTML = lastVal; 
+        else display.innerHTML += lastVal;
     }
 
     /*============================
@@ -537,6 +585,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Guard statement for the back parenthesis 
         if (valueToAdd === ")" && frontParenthesisCount(display.innerHTML) === 0) return;
+
+        // Set the calculateDone flag
+        if (calculateDone) calculateDone = false;
 
         // Add the parenthesis 
         if (display.innerHTML == 0 || display.innerHTML == lastVal) display.innerHTML = valueToAdd;
@@ -588,7 +639,10 @@ document.addEventListener("DOMContentLoaded", function() {
         if (displayLast === "ˆ") return;
         if (display.innerHTML == 0 && valueToAdd !== "−") return;
         if (display.innerHTML == "−") return;
-        
+
+        // Set the calculateDone flag
+        if (calculateDone) calculateDone = false;
+
         // Determine value to add 
         if (this.id === "add" || e.key === "+") valueToAdd = "+";
         else if (this.id === "subtract" || e.key === "-") valueToAdd = "−";
@@ -613,17 +667,22 @@ document.addEventListener("DOMContentLoaded", function() {
         // Apply styles
         divActiveStyles(exponentDiv, "active-right", "inactive-right");
         
-        // Guard statements
+        // Parse the text of the display
         var numbers = display.innerHTML.split(/[+÷×−]/g);
         const displayLastParsed = numbers[numbers.length - 1];
         const displayLast = display.innerHTML[display.innerHTML.length - 1];
         //console.log(numbers, displayLast, displayLastParsed);
 
+        // Guard statements
         if (displayLast.match(fourOperatorsRegex)) return;
         if (displayLastParsed == 0) return;
         if (displayLastParsed == ".") return;
         if (displayLast.match(/[ˆ]/g)) return;
         
+        // Set the calculateDone flag
+        if (calculateDone) calculateDone = false;
+
+        // Enter a cirumflex into the calculator
         display.innerHTML += "ˆ";
     }
 
@@ -637,11 +696,13 @@ document.addEventListener("DOMContentLoaded", function() {
     function calculate() {
         var displayText = display.innerHTML;
         
-        divActiveStyles(equalsDiv, "active-right", "inactive-right"); // apply styles
+        // Apply styles
+        divActiveStyles(equalsDiv, "active-right", "inactive-right");
 
+        // Guard statements
         if (displayText == 0) return;
         if (!displayText.match(/\d.*[+÷×ˆ−].*\d/g)) return;
-        if ("+÷×ˆ−".includes(displayText[displayText.length - 1])) return;
+        if (displayText[displayText.length - 1].match(/[+÷×ˆ−]/)) return;
 
         console.log("original text:", displayText);
 
@@ -667,6 +728,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Remove parentheses around elements that only have one number inside
         displayText = displayText.replaceAll(/(?<=[(]{1}[÷+×ˆ−]*\d*[÷+×ˆ−]*)[)]|[(](?=[÷+×ˆ−]*\d*[÷+×ˆ−]*[)]{1})/g, "");
 
+        // Print string after processing for parentheses
         console.log("final text:", displayText);
 
         // Process the display text getting rid of erroneous statements
@@ -680,21 +742,25 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
+        // Print string after processing for erroneous uses of operators (repetition)
         console.log("final array:", parsedText);
 
         // Transfer parsedText to an abstract syntax trees and call class methods 
         var tree = new AbstractSyntaxTree(parsedText);
-        //tree.build();
 
+        // Display a visual representation of the tree in the console
         tree.print();
 
+        // Calculate the value of the arithmetic string 
         var calculation = tree.calculate();
-
-        console.log("final calculation:", calculation);
 
         // Make sure rounding errors are eliminated
         calculation = Math.round(calculation * 1000000000000) / 1000000000000; 
+
+        // Display the final calculation in the console
+        console.log("final calculation:", calculation);
         
+        // Uncomment if prettier formatting for negative numbers is desired
         // Check if the calculated number is negative and adjust the format if so
         /*if (calculation < 0) calculation = "−" + Math.abs(calculation);
         else calculation = calculation.toString();*/
@@ -702,8 +768,8 @@ document.addEventListener("DOMContentLoaded", function() {
         // Store the answer in the global variable lastVal
         lastVal = calculation; 
 
-        // Set flag
-        //calculateDone = true; 
+        // Set calculateDone flag (to be set back to false after pressing another key)
+        calculateDone = true; 
 
         // Show the result of the calculation in the display
         display.innerHTML = calculation;
@@ -719,9 +785,10 @@ document.addEventListener("DOMContentLoaded", function() {
         div.classList.remove(inactiveStyle);
         div.classList.add(activeStyle);
 
+        
         setTimeout(() => {
-            div.classList.remove(activeStyle);
             div.classList.add(inactiveStyle);
+            div.classList.remove(activeStyle);
         }, 300);
     }
 

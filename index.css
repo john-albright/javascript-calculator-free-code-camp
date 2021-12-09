@@ -1,5 +1,6 @@
 body {
-    background-color: rgb(53, 77, 187);
+    background-image: linear-gradient(135deg, rgb(53, 77, 187), rgb(93, 104, 148));
+    height: 100vh;
     color: lightgray;
     font-size: 1.5em;
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
@@ -11,7 +12,7 @@ body {
     border-radius: 2px;
     width: 350px; 
     padding: 10px;
-    margin: auto;
+    margin: 50px auto auto auto;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: 90px repeat(6, 60px);
@@ -50,6 +51,30 @@ body {
     grid-column: 1/3; 
 }
 
+#footer {
+    color: snow;
+    display: flex;
+    line-height: 20px;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    font-size: 0.6em;
+}
+
+#footer a {
+    text-decoration: none;
+}
+
+#footer a:link, a:visited {
+    color: rgb(216, 143, 130);
+    transition: all 0.3s linear;
+}
+
+#footer a:active, a:hover {
+    color: rgb(212, 201, 141);
+    transition: all 0.3s linear;
+}
+
 /****
 =============
 Classes to be applied with JavaScript in a toggle-like fashion.
@@ -69,7 +94,7 @@ Classes to be applied with JavaScript in a toggle-like fashion.
 
 .active-right {
     background-color: rgb(207, 147, 137);
-    border: 1.5px solid rgb(218, 33, 33);
+    border: 1.5px solid rgb(221, 13, 13);
     transition: all 0.5s ease-in;
 }
 

@@ -47,8 +47,8 @@ The following is a list of all event listeners added to the document:
 - calculate(): this calculates the result of the expression entered into the display. 
 
 The calculate() event listener function relies on an abstract syntax tree class method by the same name. This tree is built with the node class, which has been slightly altered to have a poperty of either operator or value (i.e. operand, number). The node class is built to make sure that a node has one or the other (a value OR an operand) but not both. The build() class method is automatically triggered if an abstract syntax tree is instantiated with an array of valid operands and operators, i.e. a number like -92.34 or 6 and any operator from the following list:
-- + (unicode: U+002b)
-- − (unicode: U+2212) (not the same as the minus sign - unicode U+002d)
+- &#43; (unicode: U+002b)
+- &#8722; (unicode: U+2212) (not the same as the minus sign - unicode U+002d)
 - × (unicode: U+00d7)
 - ÷ (unicode: U+00f7)
 - ˆ (unicode: U+02C6) (not the same as the circumflex - unicode U+005e)
