@@ -47,13 +47,15 @@ The following is a list of all event listeners added to the document:
 - calculate(): this calculates the result of the expression entered into the display. 
 
 The calculate() event listener function relies on an abstract syntax tree class method by the same name. This tree is built with the node class, which has been slightly altered to have a poperty of either operator or value (i.e. operand, number). The node class is built to make sure that a node has one or the other (a value OR an operand) but not both. The build() class method is automatically triggered if an abstract syntax tree is instantiated with an array of valid operands and operators, i.e. a number like -92.34 or 6 and any operator from the following list:
-- &#43; (unicode: U+002b)
-- &#8722; (unicode: U+2212) (not the same as the minus sign - unicode U+002d)
-- × (unicode: U+00d7)
-- ÷ (unicode: U+00f7)
-- ˆ (unicode: U+02C6) (not the same as the circumflex - unicode U+005e)
-- ( (unicode: U+0028)
-- ) (unicode: U+0029)
+| symbol |  unicode |        notes        |
+| ------ |  ------  | --------------------- |
+| &#43; | U+002b | |
+| &#8722; | U+2212 | not the same as the minus sign (U+002d) |
+| × | U+00d7 | |
+| ÷ | U+00f7 | |
+| ˆ | U+02C6 | not the same as the circumflex (U+005e) |
+| ( | U+0028 | |
+| ) | U+0029 | |
 
 The calculator can process strings with chains of operators and numbers by using complex regex expressions. The final operator in the chain between one operand and the subsequent will be the one chosen for processing. However, a subtraction symbol before any number will be interpreted as a negative sign. Upon hitting the equals sign, the text in the display div will be printed to the console as well as a version with erroneous uses of parentheses extracted (with a few regex statements and replaceAll() calls to the string). The final version of the display div text is shown in an array that has been parsed with regex expressions weeding out chains or operators and processing subtraction signs before numbers as minus signs. 
 

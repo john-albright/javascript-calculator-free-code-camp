@@ -403,7 +403,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // To see the names of all divs activated, uncomment the following line 
     // allDivs.forEach(x => x.addEventListener('click', printDivID));
     
-    // Function for debugging by 
+    // Function for debugging
     function printDivID(e) {
         //console.log("lastVal:", lastVal);
         console.log("calculate done?", calculateDone);
